@@ -81,7 +81,20 @@ export default function Customers() {
         <Table
           rows={rows}
           columns={[
-            { key: 'name', label: 'Name' },
+            {
+              key: 'name',
+              label: 'Name',
+              render: (r) => (
+                <div className="flex items-center gap-2">
+                  <span className="font-medium text-slate-900 dark:text-white">{r.name}</span>
+                  {r.isWalkIn && (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300">
+                      Walk-in
+                    </span>
+                  )}
+                </div>
+              ),
+            },
             { key: 'phone', label: 'Phone' },
             { key: 'email', label: 'Email' },
             { key: 'address', label: 'Address' },
@@ -110,7 +123,17 @@ export default function Customers() {
         <form onSubmit={save} className="space-y-3">
           <div>
             <label className="label">Customer Name</label>
-            <input className="input" placeholder="Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
+            <input
+              className="input disabled:bg-slate-100 dark:disabled:bg-slate-800 disabled:cursor-not-allowed"
+              placeholder="Name"
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+              disabled={Boolean(edit?.isWalkIn)}
+              required
+            />
+            {edit?.isWalkIn && (
+              <p className="text-xs text-slate-400 mt-1">The default walk-in customer cannot be renamed.</p>
+            )}
           </div>
           <div>
             <label className="label">Phone (Optional)</label>
