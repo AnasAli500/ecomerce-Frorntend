@@ -86,14 +86,14 @@ export default function NewSale() {
   const subtotal = Math.max(grossSubtotal - totalItemDiscounts, 0);
   const total = Math.max(subtotal - Number(discount || 0), 0);
 
-  // Keep paid in sync with total for Walk-in customer
+  // Pre-fill paid with total when switching to walk-in customer or initializing
   useEffect(() => {
     if (isWalkIn) {
       setPaid(total);
     }
-  }, [isWalkIn, total]);
+  }, [customer]);
 
-  const debt = isWalkIn ? 0 : Math.max(total - Number(paid || 0), 0);
+  const debt = Math.max(total - Number(paid || 0), 0);
 
   const handleSaveCustomer = async (e) => {
     e.preventDefault();
@@ -545,16 +545,9 @@ export default function NewSale() {
             />
           </div>
           <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className="label mb-0">Paid ($)</label>
-              {isWalkIn && (
-                <span className="text-[11px] font-medium text-amber-600 dark:text-amber-400">
-                  Locked (Walk-in)
-                </span>
-              )}
-            </div>
+            <label className="label">Paid ($)</label>
             <input
-              className="input disabled:bg-slate-100 dark:disabled:bg-slate-800 disabled:cursor-not-allowed"
+              className="input"
               type="number"
               min="0"
               step="0.01"
@@ -563,7 +556,7 @@ export default function NewSale() {
                 setError('');
                 setPaid(e.target.value);
               }}
-              disabled={isWalkIn}
+              placeholder="0.00"
               required
             />
           </div>
