@@ -15,25 +15,68 @@ export default function SalesHistory() {
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
   const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
   const debounced = useDebounce(search);
 
   useEffect(() => {
-    api.get('/sales', { params: { search: debounced, paymentStatus: status || undefined, page } }).then((res) => {
-      setRows(res.data.data);
-      setMeta(res.data.meta);
-    });
-  }, [debounced, status, page]);
+    api
+      .get('/sales', {
+        params: {
+          search: debounced,
+          paymentStatus: status || undefined,
+          page,
+          limit,
+        },
+      })
+      .then((res) => {
+        setRows(res.data.data);
+        setMeta(res.data.meta);
+      });
+  }, [debounced, status, page, limit]);
 
   return (
     <div>
       <PageHeader title="Sales History" to="/sales/new" actionLabel="New Sale" />
-      <div className="mb-4 flex gap-2">
-        <SearchInput value={search} onChange={setSearch} placeholder="Invoice number" />
-        <select className="input max-w-[160px]" value={status} onChange={(e) => setStatus(e.target.value)}>
+      <div className="mb-4 flex flex-wrap gap-2">
+        <SearchInput
+          value={search}
+          onChange={(val) => {
+            setSearch(val);
+            setPage(1);
+          }}
+          placeholder="Invoice number"
+        />
+        <select
+          className="input max-w-[160px]"
+          value={status}
+          onChange={(e) => {
+            setStatus(e.target.value);
+            setPage(1);
+          }}
+        >
           <option value="">All statuses</option>
           <option>Paid</option>
           <option>Partial</option>
           <option>Unpaid</option>
+        </select>
+        <select
+          className="input max-w-[150px]"
+          value={limit}
+          onChange={(e) => {
+            const val = e.target.value === 'all' ? 'all' : Number(e.target.value);
+            setLimit(val);
+            setPage(1);
+          }}
+        >
+          <option value={10}>10 per page</option>
+          <option value={25}>25 per page</option>
+          <option value={50}>50 per page</option>
+          <option value={100}>100 per page</option>
+          <option value={200}>200 per page</option>
+          <option value={300}>300 per page</option>
+          <option value={400}>400 per page</option>
+          <option value={500}>500 per page</option>
+          <option value="all">All</option>
         </select>
       </div>
       <div className="card">
@@ -52,7 +95,7 @@ export default function SalesHistory() {
             { key: 'a', label: '', render: (r) => <Link className="text-brand-600" to={`/sales/${r._id}`}>View / Print</Link> },
           ]}
         />
-        <Pagination meta={meta} onPage={setPage} />
+        <Pagination meta={meta} onPage={setPage} limit={limit} onLimitChange={setLimit} />
       </div>
     </div>
   );

@@ -14,19 +14,52 @@ export default function PurchaseHistory() {
   const [meta, setMeta] = useState(null);
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
   const debounced = useDebounce(search);
 
   useEffect(() => {
-    api.get('/purchases', { params: { search: debounced, page } }).then((res) => {
-      setRows(res.data.data);
-      setMeta(res.data.meta);
-    });
-  }, [debounced, page]);
+    api
+      .get('/purchases', {
+        params: { search: debounced, page, limit },
+      })
+      .then((res) => {
+        setRows(res.data.data);
+        setMeta(res.data.meta);
+      });
+  }, [debounced, page, limit]);
 
   return (
     <div>
       <PageHeader title="Purchase History" to="/purchases/new" actionLabel="New Purchase" />
-      <SearchInput value={search} onChange={setSearch} placeholder="Invoice number" />
+      <div className="flex flex-wrap gap-2">
+        <SearchInput
+          value={search}
+          onChange={(v) => {
+            setSearch(v);
+            setPage(1);
+          }}
+          placeholder="Invoice number"
+        />
+        <select
+          className="input max-w-[150px]"
+          value={limit}
+          onChange={(e) => {
+            const val = e.target.value === 'all' ? 'all' : Number(e.target.value);
+            setLimit(val);
+            setPage(1);
+          }}
+        >
+          <option value={10}>10 per page</option>
+          <option value={25}>25 per page</option>
+          <option value={50}>50 per page</option>
+          <option value={100}>100 per page</option>
+          <option value={200}>200 per page</option>
+          <option value={300}>300 per page</option>
+          <option value={400}>400 per page</option>
+          <option value={500}>500 per page</option>
+          <option value="all">All</option>
+        </select>
+      </div>
       <div className="mt-4 card">
         <Table
           rows={rows}
@@ -42,7 +75,7 @@ export default function PurchaseHistory() {
             { key: 'a', label: '', render: (r) => <Link className="text-brand-600" to={`/purchases/${r._id}`}>View</Link> },
           ]}
         />
-        <Pagination meta={meta} onPage={setPage} />
+        <Pagination meta={meta} onPage={setPage} limit={limit} onLimitChange={setLimit} />
       </div>
     </div>
   );

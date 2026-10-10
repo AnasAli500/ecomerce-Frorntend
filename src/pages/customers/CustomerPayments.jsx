@@ -9,13 +9,14 @@ export default function CustomerPayments() {
   const [rows, setRows] = useState([]);
   const [meta, setMeta] = useState(null);
   const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
 
   useEffect(() => {
-    api.get('/payments/customers', { params: { page } }).then((res) => {
+    api.get('/payments/customers', { params: { page, limit } }).then((res) => {
       setRows(res.data.data);
       setMeta(res.data.meta);
     });
-  }, [page]);
+  }, [page, limit]);
 
   return (
     <div>
@@ -33,7 +34,7 @@ export default function CustomerPayments() {
             { key: 'createdBy', label: 'Admin', render: (r) => r.createdBy?.name },
           ]}
         />
-        <Pagination meta={meta} onPage={setPage} />
+        <Pagination meta={meta} onPage={setPage} limit={limit} onLimitChange={setLimit} />
       </div>
     </div>
   );

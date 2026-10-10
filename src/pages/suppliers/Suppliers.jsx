@@ -16,6 +16,7 @@ export default function Suppliers() {
   const [meta, setMeta] = useState(null);
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
   const [open, setOpen] = useState(false);
   const [edit, setEdit] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -23,11 +24,11 @@ export default function Suppliers() {
   const debounced = useDebounce(search);
 
   const load = async () => {
-    const res = await api.get('/suppliers', { params: { search: debounced, page } });
+    const res = await api.get('/suppliers', { params: { search: debounced, page, limit } });
     setRows(res.data.data);
     setMeta(res.data.meta);
   };
-  useEffect(() => { load(); }, [debounced, page]);
+  useEffect(() => { load(); }, [debounced, page, limit]);
 
   const handleOpenAdd = () => {
     setEdit(null);
@@ -71,7 +72,35 @@ export default function Suppliers() {
   return (
     <div>
       <PageHeader title="Suppliers" action={<Button onClick={handleOpenAdd}>Add Supplier</Button>} />
-      <SearchInput value={search} onChange={setSearch} placeholder="Search suppliers" />
+      <div className="flex flex-wrap gap-2">
+        <SearchInput
+          value={search}
+          onChange={(v) => {
+            setSearch(v);
+            setPage(1);
+          }}
+          placeholder="Search suppliers"
+        />
+        <select
+          className="input max-w-[150px]"
+          value={limit}
+          onChange={(e) => {
+            const val = e.target.value === 'all' ? 'all' : Number(e.target.value);
+            setLimit(val);
+            setPage(1);
+          }}
+        >
+          <option value={10}>10 per page</option>
+          <option value={25}>25 per page</option>
+          <option value={50}>50 per page</option>
+          <option value={100}>100 per page</option>
+          <option value={200}>200 per page</option>
+          <option value={300}>300 per page</option>
+          <option value={400}>400 per page</option>
+          <option value={500}>500 per page</option>
+          <option value="all">All</option>
+        </select>
+      </div>
       <div className="mt-4 card">
         <Table
           rows={rows}
@@ -98,7 +127,7 @@ export default function Suppliers() {
             },
           ]}
         />
-        <Pagination meta={meta} onPage={setPage} />
+        <Pagination meta={meta} onPage={setPage} limit={limit} onLimitChange={setLimit} />
       </div>
       <Modal open={open} title={edit ? 'Edit supplier' : 'Add supplier'} onClose={() => setOpen(false)}>
         <form className="space-y-3" onSubmit={save}>

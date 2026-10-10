@@ -19,6 +19,7 @@ export default function Users() {
   const [meta, setMeta] = useState(null);
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
   const [roleFilter, setRoleFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
 
@@ -35,7 +36,7 @@ export default function Users() {
   const load = async () => {
     try {
       const res = await api.get('/users', {
-        params: { search: debounced, page, role: roleFilter || undefined, status: statusFilter || undefined },
+        params: { search: debounced, page, limit, role: roleFilter || undefined, status: statusFilter || undefined },
       });
       setRows(res.data.data);
       setMeta(res.data.meta);
@@ -44,7 +45,7 @@ export default function Users() {
     }
   };
 
-  useEffect(() => { load(); }, [debounced, page, roleFilter, statusFilter]);
+  useEffect(() => { load(); }, [debounced, page, limit, roleFilter, statusFilter]);
 
   // ── Add ──────────────────────────────────────────────
   const handleOpenAdd = () => {
@@ -136,6 +137,25 @@ export default function Users() {
           <option value="active">Active</option>
           <option value="inactive">Inactive</option>
         </select>
+        <select
+          className="input max-w-[150px]"
+          value={limit}
+          onChange={(e) => {
+            const val = e.target.value === 'all' ? 'all' : Number(e.target.value);
+            setLimit(val);
+            setPage(1);
+          }}
+        >
+          <option value={10}>10 per page</option>
+          <option value={25}>25 per page</option>
+          <option value={50}>50 per page</option>
+          <option value={100}>100 per page</option>
+          <option value={200}>200 per page</option>
+          <option value={300}>300 per page</option>
+          <option value={400}>400 per page</option>
+          <option value={500}>500 per page</option>
+          <option value="all">All</option>
+        </select>
       </div>
 
       {/* Table */}
@@ -181,7 +201,7 @@ export default function Users() {
             },
           ]}
         />
-        <Pagination meta={meta} onPage={setPage} />
+        <Pagination meta={meta} onPage={setPage} limit={limit} onLimitChange={setLimit} />
       </div>
 
       {/* Add / Edit Modal */}

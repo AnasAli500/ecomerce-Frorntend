@@ -21,6 +21,7 @@ export default function Products() {
   const [status, setStatus] = useState('');
   const [lowStock, setLowStock] = useState(false);
   const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
   const [sort, setSort] = useState('createdAt');
   const [order, setOrder] = useState('desc');
   const [loading, setLoading] = useState(true);
@@ -32,14 +33,14 @@ export default function Products() {
   const load = async () => {
     setLoading(true);
     const res = await api.get('/products', {
-      params: { search: debounced, status, lowStock: lowStock || undefined, page, sort, order, limit: 10 },
+      params: { search: debounced, status, lowStock: lowStock || undefined, page, sort, order, limit },
     });
     setRows(res.data.data);
     setMeta(res.data.meta);
     setLoading(false);
   };
 
-  useEffect(() => { load(); }, [debounced, status, lowStock, page, sort, order]);
+  useEffect(() => { load(); }, [debounced, status, lowStock, page, sort, order, limit]);
 
   const onSort = (key) => {
     if (sort === key) setOrder((o) => (o === 'asc' ? 'desc' : 'asc'));
@@ -72,9 +73,28 @@ export default function Products() {
           <option value="inactive">Inactive</option>
         </select>
         <label className="flex items-center gap-2 text-sm">
-          <input type="checkbox" checked={lowStock} onChange={(e) => setLowStock(e.target.checked)} />
+          <input type="checkbox" checked={lowStock} onChange={(e) => { setLowStock(e.target.checked); setPage(1); }} />
           Low stock
         </label>
+        <select
+          className="input max-w-[150px]"
+          value={limit}
+          onChange={(e) => {
+            const val = e.target.value === 'all' ? 'all' : Number(e.target.value);
+            setLimit(val);
+            setPage(1);
+          }}
+        >
+          <option value={10}>10 per page</option>
+          <option value={25}>25 per page</option>
+          <option value={50}>50 per page</option>
+          <option value={100}>100 per page</option>
+          <option value={200}>200 per page</option>
+          <option value={300}>300 per page</option>
+          <option value={400}>400 per page</option>
+          <option value={500}>500 per page</option>
+          <option value="all">All</option>
+        </select>
       </div>
       <div className="card">
         <Table
@@ -110,7 +130,7 @@ export default function Products() {
             ) },
           ]}
         />
-        <Pagination meta={meta} onPage={setPage} />
+        <Pagination meta={meta} onPage={setPage} limit={limit} onLimitChange={setLimit} />
       </div>
 
       <ProductModal

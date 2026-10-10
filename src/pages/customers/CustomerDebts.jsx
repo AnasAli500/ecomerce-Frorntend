@@ -14,16 +14,17 @@ export default function CustomerDebts() {
   const [rows, setRows] = useState([]);
   const [meta, setMeta] = useState(null);
   const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
   const [selected, setSelected] = useState(null);
   const [amount, setAmount] = useState('');
 
   const load = () => {
-    api.get('/customers', { params: { debt: true, page, sort: 'totalDebt', order: 'desc' } }).then((res) => {
+    api.get('/customers', { params: { debt: true, page, limit, sort: 'totalDebt', order: 'desc' } }).then((res) => {
       setRows(res.data.data);
       setMeta(res.data.meta);
     });
   };
-  useEffect(() => { load(); }, [page]);
+  useEffect(() => { load(); }, [page, limit]);
 
   const debtStatus = (r) => (r.totalDebt <= 0 ? 'Paid' : r.totalPaid > 0 ? 'Partial' : 'Unpaid');
 
@@ -48,7 +49,7 @@ export default function CustomerDebts() {
             ) },
           ]}
         />
-        <Pagination meta={meta} onPage={setPage} />
+        <Pagination meta={meta} onPage={setPage} limit={limit} onLimitChange={setLimit} />
       </div>
       <Modal open={!!selected} title="Record payment" onClose={() => setSelected(null)}>
         {selected && (

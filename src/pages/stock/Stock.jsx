@@ -20,12 +20,13 @@ export default function Stock() {
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
   const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(15);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ product: '', quantity: 1, type: 'in', reason: 'adjustment_in', notes: '' });
   const debounced = useDebounce(search);
 
   const load = async () => {
-    const params = { search: debounced, type, page, limit: 15 };
+    const params = { search: debounced, type, page, limit };
     if (period) params.period = period;
     if (from && to) {
       params.from = from;
@@ -40,7 +41,7 @@ export default function Stock() {
   useEffect(() => {
     load();
     api.get('/products', { params: { limit: 100 } }).then((res) => setProducts(res.data.data));
-  }, [debounced, type, period, from, to, page]);
+  }, [debounced, type, period, from, to, page, limit]);
 
   const save = async (e) => {
     e.preventDefault();
@@ -71,8 +72,27 @@ export default function Stock() {
           <option value="month">This Month</option>
           <option value="year">This Year</option>
         </select>
-        <input className="input max-w-[150px]" type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
-        <input className="input max-w-[150px]" type="date" value={to} onChange={(e) => setTo(e.target.value)} />
+        <input className="input max-w-[150px]" type="date" value={from} onChange={(e) => { setFrom(e.target.value); setPage(1); }} />
+        <input className="input max-w-[150px]" type="date" value={to} onChange={(e) => { setTo(e.target.value); setPage(1); }} />
+        <select
+          className="input max-w-[150px]"
+          value={limit}
+          onChange={(e) => {
+            const val = e.target.value === 'all' ? 'all' : Number(e.target.value);
+            setLimit(val);
+            setPage(1);
+          }}
+        >
+          <option value={15}>15 per page</option>
+          <option value={25}>25 per page</option>
+          <option value={50}>50 per page</option>
+          <option value={100}>100 per page</option>
+          <option value={200}>200 per page</option>
+          <option value={300}>300 per page</option>
+          <option value={400}>400 per page</option>
+          <option value={500}>500 per page</option>
+          <option value="all">All</option>
+        </select>
       </div>
       <div className="card">
         <Table
@@ -88,7 +108,7 @@ export default function Stock() {
             { key: 'reason', label: 'Reason' },
           ]}
         />
-        <Pagination meta={meta} onPage={setPage} />
+        <Pagination meta={meta} onPage={setPage} limit={limit} onLimitChange={setLimit} />
       </div>
       <Modal open={open} title="Stock adjustment" onClose={() => setOpen(false)}>
         <form onSubmit={save} className="space-y-3">
