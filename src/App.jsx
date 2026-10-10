@@ -24,6 +24,7 @@ import Suppliers from './pages/suppliers/Suppliers';
 import SupplierView from './pages/suppliers/SupplierView';
 import Expenses from './pages/expenses/Expenses';
 import Reports from './pages/reports/Reports';
+import ProfitReport from './pages/reports/ProfitReport';
 import Users from './pages/users/Users';
 import SettingsPage from './pages/settings/SettingsPage';
 
@@ -62,6 +63,14 @@ export default function App() {
         <Route path="suppliers/:id" element={<SupplierView />} />
         <Route path="expenses" element={<Expenses />} />
         <Route path="reports" element={<Reports />} />
+        <Route
+          path="reports/profit"
+          element={(
+            <ProtectedRoute adminOnly>
+              <ProfitReport />
+            </ProtectedRoute>
+          )}
+        />
         <Route
           path="users"
           element={(

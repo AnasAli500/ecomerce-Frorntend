@@ -17,6 +17,7 @@ import {
   Receipt,
   CreditCard,
   History,
+  Sparkles,
 } from 'lucide-react';
 
 const items = [
@@ -59,7 +60,14 @@ const items = [
   },
   { to: '/suppliers', label: 'Suppliers', icon: Building2 },
   { to: '/expenses', label: 'Expenses', icon: Wallet },
-  { to: '/reports', label: 'Reports', icon: BarChart3 },
+  {
+    label: 'Reports',
+    icon: BarChart3,
+    children: [
+      { to: '/reports', label: 'All Reports', icon: BarChart3 },
+      { to: '/reports/profit', label: 'Profit', icon: Sparkles },
+    ],
+  },
   { to: '/users', label: 'Users', icon: UserCog },
   { to: '/settings', label: 'Settings', icon: Settings },
 ];
@@ -68,7 +76,7 @@ function ItemLink({ to, label, onClick }) {
   return (
     <NavLink
       to={to}
-      end={to === '/'}
+      end={to === '/' || to === '/reports'}
       onClick={onClick}
       className={({ isActive }) =>
         `flex items-center gap-2.5 rounded-xl px-3.5 py-2 text-xs font-medium transition-all duration-150 ${

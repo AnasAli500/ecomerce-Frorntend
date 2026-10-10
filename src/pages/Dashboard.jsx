@@ -46,7 +46,16 @@ export default function Dashboard() {
 
   const statCards = [
     { label: "Today's Sales", value: money(t.todaysSales), icon: TrendingUp, color: 'from-emerald-500 to-teal-600', text: 'text-emerald-500', bg: 'bg-emerald-50 dark:bg-emerald-950/30' },
-    { label: "Today's Profit", value: money(t.todaysProfit), icon: Sparkles, color: 'from-indigo-500 to-purple-600', text: 'text-indigo-500', bg: 'bg-indigo-50 dark:bg-indigo-950/30' },
+    {
+      label: "Today's Profit",
+      value: money(t.todaysProfit),
+      icon: Sparkles,
+      color: 'from-indigo-500 to-purple-600',
+      text: 'text-indigo-500',
+      bg: 'bg-indigo-50 dark:bg-indigo-950/30',
+      to: '/reports/profit',
+      hint: 'Click to see profit per sale',
+    },
     { label: 'Total Sales', value: money(t.totalSales), icon: DollarSign, color: 'from-blue-500 to-cyan-600', text: 'text-blue-500', bg: 'bg-blue-50 dark:bg-blue-950/30' },
     { label: 'Total Purchases', value: money(t.totalPurchases), icon: ShoppingCart, color: 'from-sky-500 to-blue-600', text: 'text-sky-500', bg: 'bg-sky-50 dark:bg-sky-950/30' },
     { label: 'Total Products', value: t.totalProducts, icon: Package, color: 'from-amber-500 to-orange-600', text: 'text-amber-500', bg: 'bg-amber-50 dark:bg-amber-950/30' },
@@ -86,11 +95,23 @@ export default function Dashboard() {
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
         {statCards.map((card, idx) => {
           const Icon = card.icon;
+          const CardTag = card.to ? Link : 'div';
+          const cardProps = card.to
+            ? {
+                to: card.to,
+                role: 'button',
+                'aria-label': `${card.label}: ${card.value}. ${card.hint}`,
+                tabIndex: 0,
+                className:
+                  'group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-4 shadow-card transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-indigo-300 hover:ring-2 hover:ring-indigo-500/20 dark:border-slate-800/80 dark:bg-slate-900 dark:hover:border-indigo-500/40 dark:hover:ring-indigo-400/20 cursor-pointer block focus:outline-none focus:ring-2 focus:ring-brand-500',
+              }
+            : {
+                className:
+                  'group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-4 shadow-card transition-all duration-300 hover:-translate-y-1 hover:shadow-xl dark:border-slate-800/80 dark:bg-slate-900',
+              };
+
           return (
-            <div
-              key={idx}
-              className="group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-4 shadow-card transition-all duration-300 hover:-translate-y-1 hover:shadow-xl dark:border-slate-800/80 dark:bg-slate-900"
-            >
+            <CardTag key={idx} {...cardProps}>
               <div className="flex items-center justify-between">
                 <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                   {card.label}
@@ -103,10 +124,16 @@ export default function Dashboard() {
                 <h3 className="text-xl font-extrabold tracking-tight text-slate-900 dark:text-white">
                   {card.value}
                 </h3>
+                {card.hint && (
+                  <p className="mt-1.5 flex items-center gap-1 text-[11px] font-semibold text-indigo-600 transition-colors group-hover:text-indigo-700 dark:text-indigo-400 dark:group-hover:text-indigo-300">
+                    <span>{card.hint}</span>
+                    <ArrowUpRight size={13} className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                  </p>
+                )}
               </div>
               {/* Bottom accent gradient bar */}
               <div className={`absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r ${card.color} opacity-80 group-hover:opacity-100 transition-opacity`}></div>
-            </div>
+            </CardTag>
           );
         })}
       </div>
