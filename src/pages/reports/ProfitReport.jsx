@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, Fragment } from 'react';
 import {
   TrendingUp,
   TrendingDown,
@@ -464,55 +464,55 @@ export default function ProfitReport() {
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-left text-sm">
-              <thead>
-                <tr className="border-b border-slate-200 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:border-slate-800 dark:text-slate-400">
-                  <th className="w-10 px-3 py-3" />
-                  <th className="px-4 py-3">Invoice</th>
-                  <th className="px-4 py-3">Date</th>
-                  <th className="px-4 py-3">Customer</th>
-                  <th className="px-4 py-3 text-right">Revenue</th>
-                  <th className="px-4 py-3 text-right">Cost</th>
-                  <th className="px-4 py-3 text-right">Profit</th>
+          <div className="overflow-x-auto rounded-xl border border-slate-200/80 dark:border-slate-800">
+            <table className="min-w-full table-auto text-left text-sm divide-y divide-slate-200 dark:divide-slate-800">
+              <thead className="bg-slate-50/80 dark:bg-slate-800/60">
+                <tr className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  <th scope="col" className="w-12 px-3 py-3.5 text-center"></th>
+                  <th scope="col" className="whitespace-nowrap px-4 py-3.5">Invoice</th>
+                  <th scope="col" className="whitespace-nowrap px-4 py-3.5">Date</th>
+                  <th scope="col" className="whitespace-nowrap px-4 py-3.5">Customer</th>
+                  <th scope="col" className="whitespace-nowrap px-4 py-3.5 text-right">Revenue</th>
+                  <th scope="col" className="whitespace-nowrap px-4 py-3.5 text-right">Cost</th>
+                  <th scope="col" className="whitespace-nowrap px-4 py-3.5 text-right">Profit</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
+              <tbody className="divide-y divide-slate-100 bg-white dark:divide-slate-800/60 dark:bg-slate-900">
                 {filteredSales.map((sale) => {
                   const isExpanded = !!expandedSaleIds[sale.saleId];
                   const isSaleProfitPos = sale.saleProfit >= 0;
 
                   return (
-                    <tbody key={sale.saleId} className="group/row">
+                    <Fragment key={sale.saleId}>
                       <tr
                         onClick={() => toggleExpand(sale.saleId)}
-                        className={`cursor-pointer transition-colors hover:bg-slate-50/80 dark:hover:bg-slate-800/40 ${
-                          isExpanded ? 'bg-slate-50/60 dark:bg-slate-850 dark:bg-slate-800/30' : ''
+                        className={`group cursor-pointer transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/40 ${
+                          isExpanded ? 'bg-slate-50/80 dark:bg-slate-800/30' : ''
                         }`}
                       >
-                        <td className="px-3 py-3.5 text-center text-slate-400">
+                        <td className="w-12 px-3 py-3.5 text-center text-slate-400">
                           {isExpanded ? (
-                            <ChevronDown size={18} className="text-brand-500 transition-transform" />
+                            <ChevronDown size={18} className="mx-auto text-brand-500 transition-transform" />
                           ) : (
-                            <ChevronRight size={18} className="transition-transform group-hover/row:translate-x-0.5" />
+                            <ChevronRight size={18} className="mx-auto transition-transform group-hover:translate-x-0.5" />
                           )}
                         </td>
-                        <td className="px-4 py-3.5 font-bold font-mono text-xs text-brand-600 dark:text-brand-400">
+                        <td className="whitespace-nowrap px-4 py-3.5 font-bold font-mono text-xs text-brand-600 dark:text-brand-400">
                           {sale.invoiceNo}
                         </td>
-                        <td className="px-4 py-3.5 text-slate-600 dark:text-slate-300 text-xs">
+                        <td className="whitespace-nowrap px-4 py-3.5 text-xs text-slate-600 dark:text-slate-300">
                           {formatDate(sale.date)}
                         </td>
-                        <td className="px-4 py-3.5 font-medium text-slate-800 dark:text-slate-200">
+                        <td className="whitespace-nowrap px-4 py-3.5 font-medium text-slate-800 dark:text-slate-200">
                           {sale.customerName}
                         </td>
-                        <td className="px-4 py-3.5 text-right font-semibold text-slate-900 dark:text-white">
+                        <td className="whitespace-nowrap px-4 py-3.5 text-right font-semibold text-slate-900 dark:text-white">
                           {money(sale.saleRevenue)}
                         </td>
-                        <td className="px-4 py-3.5 text-right font-medium text-slate-600 dark:text-slate-400">
+                        <td className="whitespace-nowrap px-4 py-3.5 text-right font-medium text-slate-600 dark:text-slate-400">
                           {money(sale.saleCost)}
                         </td>
-                        <td className="px-4 py-3.5 text-right">
+                        <td className="whitespace-nowrap px-4 py-3.5 text-right">
                           <span
                             className={`inline-block rounded-lg px-2.5 py-1 text-xs font-bold ${
                               isSaleProfitPos
@@ -527,106 +527,108 @@ export default function ProfitReport() {
 
                       {/* Expanded Sub-table */}
                       {isExpanded && (
-                        <tr className="bg-slate-50/70 dark:bg-slate-900/60">
-                          <td colSpan={7} className="px-4 py-4 sm:px-8">
-                            <div className="rounded-xl border border-slate-200/90 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950">
-                              <div className="mb-3 flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2.5 dark:border-slate-800">
-                                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                                  <Layers size={14} className="text-brand-500" />
-                                  Line Items Breakdown ({sale.items?.length || 0})
-                                </h4>
-                                {sale.orderDiscount > 0 && (
-                                  <span className="rounded-md bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-700 border border-amber-200 dark:bg-amber-950/50 dark:border-amber-900 dark:text-amber-300">
-                                    Order Discount: -{money(sale.orderDiscount)}
-                                  </span>
-                                )}
-                              </div>
+                        <tr className="bg-slate-50/50 dark:bg-slate-950/50">
+                          <td colSpan={7} className="p-0">
+                            <div className="border-y border-slate-200/60 bg-slate-50/30 p-4 dark:border-slate-800/80 dark:bg-slate-950/40 sm:p-6">
+                              <div className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                                <div className="mb-3 flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2.5 dark:border-slate-800">
+                                  <h4 className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                                    <Layers size={14} className="text-brand-500" />
+                                    Line Items Breakdown ({sale.items?.length || 0})
+                                  </h4>
+                                  {sale.orderDiscount > 0 && (
+                                    <span className="rounded-md border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-700 dark:border-amber-900 dark:bg-amber-950/50 dark:text-amber-300">
+                                      Order Discount: -{money(sale.orderDiscount)}
+                                    </span>
+                                  )}
+                                </div>
 
-                              <div className="overflow-x-auto">
-                                <table className="min-w-full text-left text-xs">
-                                  <thead>
-                                    <tr className="border-b border-slate-100 font-semibold text-slate-400 dark:border-slate-800">
-                                      <th className="px-3 py-2">Product</th>
-                                      <th className="px-3 py-2">Category</th>
-                                      <th className="px-3 py-2 text-center">Qty</th>
-                                      <th className="px-3 py-2 text-right">Selling Price</th>
-                                      <th className="px-3 py-2 text-right">Cost Price</th>
-                                      <th className="px-3 py-2 text-right">Discount</th>
-                                      <th className="px-3 py-2 text-right">Line Profit</th>
-                                    </tr>
-                                  </thead>
-                                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800/40">
-                                    {(sale.items || []).map((item, idx) => {
-                                      const isLineProfitPos = item.lineProfit >= 0;
-                                      return (
-                                        <tr key={idx} className="hover:bg-slate-50/50 dark:hover:bg-slate-900/40">
-                                          <td className="px-3 py-2.5 font-semibold text-slate-800 dark:text-slate-200">
-                                            {item.productName}
-                                          </td>
-                                          <td className="px-3 py-2.5 text-slate-500 dark:text-slate-400">
-                                            {item.categoryName}
-                                          </td>
-                                          <td className="px-3 py-2.5 text-center font-bold text-slate-700 dark:text-slate-300">
-                                            {item.qty}
-                                          </td>
-                                          <td className="px-3 py-2.5 text-right font-medium text-slate-700 dark:text-slate-300">
-                                            {money(item.sellingPrice)}
-                                          </td>
-                                          <td className="px-3 py-2.5 text-right font-medium text-slate-500 dark:text-slate-400">
-                                            {money(item.costPrice)}
-                                          </td>
-                                          <td className="px-3 py-2.5 text-right font-medium text-slate-500 dark:text-slate-400">
-                                            {item.lineDiscount > 0 ? `-${money(item.lineDiscount)}` : '$0.00'}
-                                          </td>
-                                          <td className="px-3 py-2.5 text-right">
-                                            <span
-                                              className={`font-bold ${
-                                                isLineProfitPos
-                                                  ? 'text-emerald-600 dark:text-emerald-400'
-                                                  : 'text-rose-600 dark:text-rose-400'
-                                              }`}
-                                            >
-                                              {money(item.lineProfit)}
-                                            </span>
-                                          </td>
-                                        </tr>
-                                      );
-                                    })}
-                                  </tbody>
-                                </table>
-                              </div>
+                                <div className="overflow-x-auto">
+                                  <table className="min-w-full text-left text-xs">
+                                    <thead>
+                                      <tr className="border-b border-slate-100 font-semibold text-slate-400 dark:border-slate-800">
+                                        <th className="whitespace-nowrap px-3 py-2">Product</th>
+                                        <th className="whitespace-nowrap px-3 py-2">Category</th>
+                                        <th className="whitespace-nowrap px-3 py-2 text-center">Qty</th>
+                                        <th className="whitespace-nowrap px-3 py-2 text-right">Selling Price</th>
+                                        <th className="whitespace-nowrap px-3 py-2 text-right">Cost Price</th>
+                                        <th className="whitespace-nowrap px-3 py-2 text-right">Discount</th>
+                                        <th className="whitespace-nowrap px-3 py-2 text-right">Line Profit</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800/40">
+                                      {(sale.items || []).map((item, idx) => {
+                                        const isLineProfitPos = item.lineProfit >= 0;
+                                        return (
+                                          <tr key={idx} className="hover:bg-slate-50/50 dark:hover:bg-slate-900/40">
+                                            <td className="whitespace-nowrap px-3 py-2.5 font-semibold text-slate-800 dark:text-slate-200">
+                                              {item.productName}
+                                            </td>
+                                            <td className="whitespace-nowrap px-3 py-2.5 text-slate-500 dark:text-slate-400">
+                                              {item.categoryName}
+                                            </td>
+                                            <td className="whitespace-nowrap px-3 py-2.5 text-center font-bold text-slate-700 dark:text-slate-300">
+                                              {item.qty}
+                                            </td>
+                                            <td className="whitespace-nowrap px-3 py-2.5 text-right font-medium text-slate-700 dark:text-slate-300">
+                                              {money(item.sellingPrice)}
+                                            </td>
+                                            <td className="whitespace-nowrap px-3 py-2.5 text-right font-medium text-slate-500 dark:text-slate-400">
+                                              {money(item.costPrice)}
+                                            </td>
+                                            <td className="whitespace-nowrap px-3 py-2.5 text-right font-medium text-slate-500 dark:text-slate-400">
+                                              {item.lineDiscount > 0 ? `-${money(item.lineDiscount)}` : '$0.00'}
+                                            </td>
+                                            <td className="whitespace-nowrap px-3 py-2.5 text-right">
+                                              <span
+                                                className={`font-bold ${
+                                                  isLineProfitPos
+                                                    ? 'text-emerald-600 dark:text-emerald-400'
+                                                    : 'text-rose-600 dark:text-rose-400'
+                                                }`}
+                                              >
+                                                {money(item.lineProfit)}
+                                              </span>
+                                            </td>
+                                          </tr>
+                                        );
+                                      })}
+                                    </tbody>
+                                  </table>
+                                </div>
 
-                              {/* Sale summary footer line */}
-                              <div className="mt-3 flex flex-wrap items-center justify-end gap-4 border-t border-slate-100 pt-2 text-xs dark:border-slate-800">
-                                {sale.orderDiscount > 0 && (
+                                {/* Sale summary footer line */}
+                                <div className="mt-3 flex flex-wrap items-center justify-end gap-4 border-t border-slate-100 pt-2 text-xs dark:border-slate-800">
+                                  {sale.orderDiscount > 0 && (
+                                    <div className="text-slate-500 dark:text-slate-400">
+                                      Order Discount: <span className="font-semibold text-amber-600">-{money(sale.orderDiscount)}</span>
+                                    </div>
+                                  )}
                                   <div className="text-slate-500 dark:text-slate-400">
-                                    Order Discount: <span className="font-semibold text-amber-600">-{money(sale.orderDiscount)}</span>
+                                    Total Revenue: <span className="font-bold text-slate-800 dark:text-slate-200">{money(sale.saleRevenue)}</span>
                                   </div>
-                                )}
-                                <div className="text-slate-500 dark:text-slate-400">
-                                  Total Revenue: <span className="font-bold text-slate-800 dark:text-slate-200">{money(sale.saleRevenue)}</span>
-                                </div>
-                                <div className="text-slate-500 dark:text-slate-400">
-                                  Total Cost: <span className="font-bold text-slate-800 dark:text-slate-200">{money(sale.saleCost)}</span>
-                                </div>
-                                <div>
-                                  Net Profit:{' '}
-                                  <span
-                                    className={`font-extrabold ${
-                                      isSaleProfitPos
-                                        ? 'text-emerald-600 dark:text-emerald-400'
-                                        : 'text-rose-600 dark:text-rose-400'
-                                    }`}
-                                  >
-                                    {money(sale.saleProfit)}
-                                  </span>
+                                  <div className="text-slate-500 dark:text-slate-400">
+                                    Total Cost: <span className="font-bold text-slate-800 dark:text-slate-200">{money(sale.saleCost)}</span>
+                                  </div>
+                                  <div>
+                                    Net Profit:{' '}
+                                    <span
+                                      className={`font-extrabold ${
+                                        isSaleProfitPos
+                                          ? 'text-emerald-600 dark:text-emerald-400'
+                                          : 'text-rose-600 dark:text-rose-400'
+                                      }`}
+                                    >
+                                      {money(sale.saleProfit)}
+                                    </span>
+                                  </div>
                                 </div>
                               </div>
                             </div>
                           </td>
                         </tr>
                       )}
-                    </tbody>
+                    </Fragment>
                   );
                 })}
               </tbody>
