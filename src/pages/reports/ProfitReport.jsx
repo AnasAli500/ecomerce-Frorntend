@@ -70,7 +70,16 @@ export default function ProfitReport() {
       const params = {};
       if (fromDate) params.from = fromDate;
       if (toDate) params.to = toDate;
-      const res = await api.get('/sales/profit', { params });
+      let res;
+      try {
+        res = await api.get('/reports/profit', { params });
+      } catch (reportsErr) {
+        if (reportsErr.response?.status === 404) {
+          res = await api.get('/sales/profit', { params });
+        } else {
+          throw reportsErr;
+        }
+      }
       setData(res.data.data);
     } catch (err) {
       console.error('Failed to load profit data:', err);
