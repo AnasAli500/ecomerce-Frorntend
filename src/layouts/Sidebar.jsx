@@ -18,10 +18,12 @@ import {
   CreditCard,
   History,
   Sparkles,
+  Bot,
 } from 'lucide-react';
 
 const items = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
+  { to: '/ai-assistant', label: 'AI Assistant', icon: Bot, badge: 'PRO' },
   {
     label: 'Products',
     icon: Package,
@@ -134,7 +136,14 @@ export default function Sidebar({ onNavigate }) {
                 }
               >
                 <Icon size={18} className="transition-transform group-hover:scale-110" />
-                <span>{item.label}</span>
+                <div className="flex items-center justify-between flex-1">
+                  <span>{item.label}</span>
+                  {item.badge && (
+                    <span className="text-[10px] font-black tracking-wider px-1.5 py-0.5 rounded-full bg-gradient-to-r from-amber-400 to-rose-500 text-white shadow-sm">
+                      {item.badge}
+                    </span>
+                  )}
+                </div>
               </NavLink>
             );
           }

@@ -27,6 +27,7 @@ import Reports from './pages/reports/Reports';
 import ProfitReport from './pages/reports/ProfitReport';
 import Users from './pages/users/Users';
 import SettingsPage from './pages/settings/SettingsPage';
+import AiAssistant from './pages/ai/AiAssistant';
 
 export default function App() {
   return (
@@ -41,6 +42,7 @@ export default function App() {
         )}
       >
         <Route index element={<Dashboard />} />
+        <Route path="ai-assistant" element={<AiAssistant />} />
         <Route path="products" element={<Products />} />
         <Route path="products/new" element={<ProductForm />} />
         <Route path="products/:id" element={<ProductView />} />
