@@ -48,6 +48,112 @@ function getPeriodDates(periodType) {
   return { from: formatInputDate(now), to: formatInputDate(now) };
 }
 
+function roundMoney(val) {
+  return Math.round((Number(val || 0) + Number.EPSILON) * 100) / 100;
+}
+
+function computeProfitFromSales(rawSales = []) {
+  let totalRevenue = 0;
+  let totalCost = 0;
+  let totalProfit = 0;
+
+  const sales = (rawSales || []).map((sale) => {
+    const orderDiscount = roundMoney(Number(sale.discount ?? sale.orderDiscount ?? 0));
+    const rawItems = sale.items || [];
+
+    let lineProfitsSum = 0;
+    let lineRevenuesSum = 0;
+    let totalCostSum = 0;
+
+    const items = rawItems.map((item) => {
+      const qty = Number(item.quantity ?? item.qty ?? 0);
+      const sellingPrice = Number(item.sellingPrice ?? 0);
+      const costPrice = Number(
+        item.costPrice !== undefined && item.costPrice !== null
+          ? item.costPrice
+          : (item.purchasePrice !== undefined && item.purchasePrice !== null
+              ? item.purchasePrice
+              : (item.product?.costPrice ?? item.product?.purchasePrice ?? 0))
+      );
+      const lineDiscount = Number(item.discount ?? item.lineDiscount ?? 0);
+
+      const lineRevenue = roundMoney(sellingPrice * qty - lineDiscount);
+      const lineCost = roundMoney(costPrice * qty);
+      const lineProfit = roundMoney((sellingPrice - costPrice) * qty - lineDiscount);
+
+      lineProfitsSum += lineProfit;
+      lineRevenuesSum += (sellingPrice * qty - lineDiscount);
+      totalCostSum += lineCost;
+
+      let categoryName = 'General';
+      if (item.categoryName) {
+        categoryName = item.categoryName;
+      } else if (item.product && typeof item.product === 'object') {
+        if (typeof item.product.category === 'object' && item.product.category?.name) {
+          categoryName = item.product.category.name;
+        } else if (typeof item.product.category === 'string') {
+          categoryName = item.product.category;
+        }
+      }
+
+      return {
+        productName: item.productName || item.product?.name || 'Product',
+        categoryName: categoryName || 'General',
+        qty,
+        sellingPrice: roundMoney(sellingPrice),
+        costPrice: roundMoney(costPrice),
+        lineDiscount: roundMoney(lineDiscount),
+        lineRevenue,
+        lineProfit,
+      };
+    });
+
+    // If sale had no items populated, fall back to sale totals
+    let saleRevenue;
+    let saleCost;
+    let saleProfit;
+
+    if (rawItems.length === 0) {
+      saleRevenue = roundMoney(Number(sale.total ?? sale.subtotal ?? 0));
+      saleCost = 0;
+      saleProfit = saleRevenue;
+    } else {
+      saleRevenue = roundMoney(lineRevenuesSum - orderDiscount);
+      saleCost = roundMoney(totalCostSum);
+      saleProfit = roundMoney(lineProfitsSum - orderDiscount);
+    }
+
+    totalRevenue += saleRevenue;
+    totalCost += saleCost;
+    totalProfit += saleProfit;
+
+    return {
+      saleId: sale._id ? String(sale._id) : (sale.saleId || ''),
+      invoiceNo: sale.invoiceNumber || sale.invoiceNo || '',
+      date: sale.date || sale.createdAt,
+      customerName:
+        typeof sale.customer === 'object' && sale.customer?.name
+          ? sale.customer.name
+          : (sale.customerName || (typeof sale.customer === 'string' ? sale.customer : 'Normal Customer')),
+      orderDiscount,
+      saleRevenue,
+      saleCost,
+      saleProfit,
+      items,
+    };
+  });
+
+  return {
+    summary: {
+      totalRevenue: roundMoney(totalRevenue),
+      totalCost: roundMoney(totalCost),
+      totalProfit: roundMoney(totalProfit),
+      salesCount: sales.length,
+    },
+    sales,
+  };
+}
+
 export default function ProfitReport() {
   const [period, setPeriod] = useState('today');
   const [from, setFrom] = useState(() => getPeriodDates('today').from);
@@ -70,17 +176,61 @@ export default function ProfitReport() {
       const params = {};
       if (fromDate) params.from = fromDate;
       if (toDate) params.to = toDate;
-      let res;
+
+      let result = null;
+
+      // 1. Try dedicated report profit endpoint
       try {
-        res = await api.get('/reports/profit', { params });
-      } catch (reportsErr) {
-        if (reportsErr.response?.status === 404) {
-          res = await api.get('/sales/profit', { params });
-        } else {
-          throw reportsErr;
+        const res = await api.get('/reports/profit', { params });
+        if (res.data?.data?.summary) {
+          result = res.data.data;
+        }
+      } catch (e1) {
+        // Fall through to sales/profit
+      }
+
+      // 2. Try sales profit endpoint
+      if (!result) {
+        try {
+          const res = await api.get('/sales/profit', { params });
+          if (res.data?.data?.summary) {
+            result = res.data.data;
+          }
+        } catch (e2) {
+          // Fall through to robust sales list fallback
         }
       }
-      setData(res.data.data);
+
+      // 3. Robust fallback: Fetch sales directly (guaranteed to work across all backend versions)
+      if (!result) {
+        const salesParams = { limit: 'all' };
+        if (fromDate && toDate) {
+          salesParams.from = fromDate;
+          salesParams.to = toDate;
+        }
+        const salesRes = await api.get('/sales', { params: salesParams });
+        const rawSales = Array.isArray(salesRes.data?.data)
+          ? salesRes.data.data
+          : Array.isArray(salesRes.data)
+            ? salesRes.data
+            : [];
+
+        // Apply strict date filtering
+        const fStart = fromDate ? new Date(`${fromDate}T00:00:00`) : null;
+        const fEnd = toDate ? new Date(`${toDate}T23:59:59.999`) : null;
+
+        const filtered = rawSales.filter((s) => {
+          if (!fStart && !fEnd) return true;
+          const sDate = new Date(s.date || s.createdAt);
+          if (fStart && sDate < fStart) return false;
+          if (fEnd && sDate > fEnd) return false;
+          return true;
+        });
+
+        result = computeProfitFromSales(filtered);
+      }
+
+      setData(result);
     } catch (err) {
       console.error('Failed to load profit data:', err);
       const msg = err.response?.data?.message || err.message || 'Failed to load profit data';
