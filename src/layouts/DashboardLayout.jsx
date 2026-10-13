@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Menu, Moon, Sun, LogOut, User as UserIcon, Shield, Bell } from 'lucide-react';
 import Sidebar from './Sidebar';
+import AIAssistant from '../components/AIAssistant';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 
@@ -85,6 +86,7 @@ export default function DashboardLayout() {
           <Outlet />
         </main>
       </div>
+      <AIAssistant />
     </div>
   );
 }
