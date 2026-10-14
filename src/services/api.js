@@ -12,6 +12,17 @@ const api = axios.create({
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
   if (token) config.headers.Authorization = `Bearer ${token}`;
+
+  const base = String(config.baseURL || '');
+  let url = String(config.url || '');
+  if (url.includes('/api/api/')) {
+    url = url.replace(/\/api\/api\//g, '/api/');
+  }
+  if (base.endsWith('/api') && url.startsWith('/api/')) {
+    url = url.slice(4);
+  }
+  config.url = url;
+
   return config;
 });
 

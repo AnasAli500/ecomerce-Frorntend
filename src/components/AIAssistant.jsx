@@ -53,11 +53,7 @@ export default function AIAssistant() {
         content: m.content,
       }));
 
-      // Call ${import.meta.env.VITE_API_URL}/api/assistant using app's axios instance
-      const rawApiUrl = `${import.meta.env.VITE_API_URL || ''}/api/assistant`;
-      const url = rawApiUrl.replace('/api/api/', '/api/');
-
-      const res = await api.post(url, {
+      const res = await api.post('/assistant', {
         messages: outgoingMessages,
       });
 
