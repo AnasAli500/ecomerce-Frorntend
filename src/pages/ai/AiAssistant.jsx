@@ -242,10 +242,12 @@ I can answer questions about any system module, analyze live sales, check debts,
 
     try {
       const payload = {
-        messages: nextConversation.map((m) => ({
-          role: m.role,
-          content: m.content,
-        })),
+        messages: nextConversation
+          .filter((m) => m && m.id !== 'welcome-msg' && !m.isError && m.content)
+          .map((m) => ({
+            role: m.role,
+            content: m.content,
+          })),
       };
 
       const res = await api.post('/ai/chat', payload);

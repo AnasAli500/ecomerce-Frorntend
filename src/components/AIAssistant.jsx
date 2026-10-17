@@ -47,18 +47,25 @@ export default function AIAssistant() {
     setLoading(true);
 
     try {
-      // Build messages payload for backend (role, content)
-      const outgoingMessages = newMessages.map((m) => ({
-        role: m.role,
-        content: m.content,
-      }));
+      // Build messages payload for backend (role, content), omitting initial greeting
+      const outgoingMessages = newMessages
+        .filter((m) => m && m.content && !m.content.includes('Hello! I am your JILE Electronics AI assistant.'))
+        .map((m) => ({
+          role: m.role,
+          content: m.content,
+        }));
 
-      const res = await api.post('/assistant', {
-        messages: outgoingMessages,
-      });
+      let reply = '';
+      try {
+        const res = await api.post('/ai/chat', { messages: outgoingMessages });
+        reply = res.data?.data?.message || res.data?.message;
+      } catch (chatErr) {
+        // Fallback to /assistant if needed
+        const res = await api.post('/assistant', { messages: outgoingMessages });
+        reply = res.data?.reply;
+      }
 
-      const reply = res.data?.reply || 'No response received.';
-      setMessages((prev) => [...prev, { role: 'assistant', content: reply }]);
+      setMessages((prev) => [...prev, { role: 'assistant', content: reply || 'No response received.' }]);
     } catch (err) {
       console.error('AI Assistant error:', err);
       const serverMsg =
