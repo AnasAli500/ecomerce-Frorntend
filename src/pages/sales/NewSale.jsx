@@ -145,6 +145,10 @@ export default function NewSale() {
   const handleProductChange = (index, productId) => {
     setError('');
     const p = products.find((x) => x._id === productId);
+    if (p && p.currentStock <= 0) {
+      setError(`"${p.name}" is OUT OF STOCK and cannot be added to a sale.`);
+      return;
+    }
     setItems((rows) =>
       rows.map((row, i) => {
         if (i !== index) return row;
@@ -216,11 +220,11 @@ export default function NewSale() {
       }
 
       if (p.currentStock <= 0) {
-        return `Row ${rowNum}: "${p.name}" is out of stock.`;
+        return `Row ${rowNum}: "${p.name}" is OUT OF STOCK and cannot be sold.`;
       }
 
       if (qty > p.currentStock) {
-        return `Row ${rowNum}: Quantity for "${p.name}" (${qty}) exceeds available stock (${p.currentStock}).`;
+        return `Row ${rowNum}: Insufficient stock for "${p.name}". Available quantity: ${p.currentStock}. You cannot sell ${qty} units.`;
       }
 
       const price = Number(row.sellingPrice);
@@ -420,7 +424,7 @@ export default function NewSale() {
                     </option>
                     {categoryProducts.map((p) => (
                       <option key={p._id} value={p._id} disabled={p.currentStock <= 0}>
-                        {p.name} {p.currentStock <= 0 ? '(out of stock)' : `· stock ${p.currentStock}`}
+                        {p.name} {p.currentStock <= 0 ? '— [OUT OF STOCK]' : `· Available: ${p.currentStock}`}
                       </option>
                     ))}
                   </select>
@@ -430,10 +434,17 @@ export default function NewSale() {
                 <div className="md:col-span-1">
                   <label className="label text-xs md:hidden">Qty</label>
                   <input
-                    className="input"
+                    className={`input ${
+                      (selectedProduct && selectedProduct.currentStock <= 0) ||
+                      (selectedProduct && Number(item.quantity) > selectedProduct.currentStock)
+                        ? 'border-rose-500 focus:ring-rose-500 text-rose-600 font-bold'
+                        : ''
+                    }`}
                     type="number"
                     min="1"
+                    max={selectedProduct ? Math.max(selectedProduct.currentStock, 1) : undefined}
                     value={item.quantity}
+                    disabled={Boolean(selectedProduct && selectedProduct.currentStock <= 0)}
                     onChange={(e) => changeItem(index, 'quantity', e.target.value)}
                     required
                   />
@@ -487,22 +498,25 @@ export default function NewSale() {
 
                 {/* In stock info under row */}
                 {selectedProduct && (
-                  <div className="col-span-full md:col-span-12 pt-1 flex items-center gap-2 text-xs border-t border-slate-100 dark:border-slate-800/60 mt-1">
-                    <span
-                      className={`font-medium ${
-                        selectedProduct.currentStock <= 0
-                          ? 'text-rose-500 font-bold'
-                          : selectedProduct.currentStock <= selectedProduct.minStock
-                          ? 'text-amber-500 font-semibold'
-                          : 'text-slate-500 dark:text-slate-400'
-                      }`}
-                    >
-                      In stock: {selectedProduct.currentStock}{' '}
-                      {selectedProduct.currentStock <= 0 ? '(out of stock)' : ''}
-                    </span>
-                    {Number(item.quantity) > selectedProduct.currentStock && (
-                      <span className="text-rose-500 font-semibold">
-                        (Warning: Quantity exceeds available stock!)
+                  <div className="col-span-full md:col-span-12 pt-1 flex flex-wrap items-center gap-2 text-xs border-t border-slate-100 dark:border-slate-800/60 mt-1">
+                    {selectedProduct.currentStock <= 0 ? (
+                      <span className="inline-flex items-center gap-1.5 rounded-md bg-rose-100 px-2.5 py-1 text-xs font-bold text-rose-700 dark:bg-rose-950/80 dark:text-rose-400 border border-rose-300 dark:border-rose-800">
+                        ⛔ OUT OF STOCK — Available quantity: 0. Cannot add or sell this item.
+                      </span>
+                    ) : Number(item.quantity) > selectedProduct.currentStock ? (
+                      <span className="inline-flex items-center gap-1.5 rounded-md bg-amber-100 px-2.5 py-1 text-xs font-bold text-amber-800 dark:bg-amber-950/80 dark:text-amber-400 border border-amber-300 dark:border-amber-800">
+                        ⚠️ Insufficient stock! Available quantity: {selectedProduct.currentStock}. You cannot sell {item.quantity}.
+                      </span>
+                    ) : (
+                      <span
+                        className={`font-medium ${
+                          selectedProduct.currentStock <= selectedProduct.minStock
+                            ? 'text-amber-600 font-semibold'
+                            : 'text-slate-500 dark:text-slate-400'
+                        }`}
+                      >
+                        Available stock: {selectedProduct.currentStock}{' '}
+                        {selectedProduct.currentStock <= selectedProduct.minStock ? '(Low Stock warning)' : ''}
                       </span>
                     )}
                   </div>
@@ -578,9 +592,32 @@ export default function NewSale() {
           </div>
         )}
 
-        <Button type="submit" disabled={submitting}>
-          {submitting ? 'Completing Sale...' : 'Complete sale'}
-        </Button>
+        {(() => {
+          const hasOutOfStock = items.some((i) => {
+            if (!i.product) return false;
+            const p = products.find((x) => x._id === i.product);
+            return p && p.currentStock <= 0;
+          });
+          const hasExceededStock = items.some((i) => {
+            if (!i.product) return false;
+            const p = products.find((x) => x._id === i.product);
+            return p && Number(i.quantity) > p.currentStock;
+          });
+          const hasNoSelectedProducts = !items.some((i) => i.product);
+          const isButtonDisabled = submitting || hasOutOfStock || hasExceededStock || hasNoSelectedProducts;
+
+          return (
+            <Button type="submit" disabled={isButtonDisabled}>
+              {hasOutOfStock
+                ? 'Cannot Sell — Product is Out of Stock'
+                : hasExceededStock
+                ? 'Cannot Sell — Quantity Exceeds Available Stock'
+                : submitting
+                ? 'Completing Sale...'
+                : 'Complete sale'}
+            </Button>
+          );
+        })()}
       </form>
 
       {/* Add Customer Modal */}

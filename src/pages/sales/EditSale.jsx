@@ -86,6 +86,21 @@ export default function EditSale() {
 
   const submit = async (e) => {
     e.preventDefault();
+    for (let idx = 0; idx < items.length; idx++) {
+      const row = items[idx];
+      const p = products.find((x) => x._id === row.product);
+      if (p) {
+        if (p.currentStock <= 0) {
+          toast.error(`"${p.name}" is OUT OF STOCK and cannot be sold.`);
+          return;
+        }
+        if (Number(row.quantity) > p.currentStock) {
+          toast.error(`Insufficient stock for "${p.name}". Available quantity: ${p.currentStock}.`);
+          return;
+        }
+      }
+    }
+
     setSubmitting(true);
     try {
       await api.put(`/sales/${id}`, {
@@ -176,8 +191,8 @@ export default function EditSale() {
                   >
                     <option value="">Select product</option>
                     {products.map((p) => (
-                      <option key={p._id} value={p._id}>
-                        {p.name} · stock {p.currentStock}
+                      <option key={p._id} value={p._id} disabled={p.currentStock <= 0}>
+                        {p.name} {p.currentStock <= 0 ? '— [OUT OF STOCK]' : `· Available: ${p.currentStock}`}
                       </option>
                     ))}
                   </select>
@@ -231,6 +246,27 @@ export default function EditSale() {
                     </button>
                   )}
                 </div>
+
+                {/* Stock info under row */}
+                {(() => {
+                  const p = products.find((x) => x._id === item.product);
+                  if (!p) return null;
+                  return (
+                    <div className="col-span-full md:col-span-12 pt-1 flex flex-wrap items-center gap-2 text-xs border-t border-slate-100 dark:border-slate-800/60 mt-1">
+                      {p.currentStock <= 0 ? (
+                        <span className="inline-flex items-center gap-1.5 rounded-md bg-rose-100 px-2 py-0.5 text-xs font-bold text-rose-700 dark:bg-rose-950/80 dark:text-rose-400 border border-rose-300 dark:border-rose-800">
+                          ⛔ OUT OF STOCK — Available quantity: 0
+                        </span>
+                      ) : Number(item.quantity) > p.currentStock ? (
+                        <span className="inline-flex items-center gap-1.5 rounded-md bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-800 dark:bg-amber-950/80 dark:text-amber-400 border border-amber-300 dark:border-amber-800">
+                          ⚠️ Insufficient stock! Available: {p.currentStock}. You requested: {item.quantity}
+                        </span>
+                      ) : (
+                        <span className="text-slate-500">Available stock: {p.currentStock}</span>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
             );
           })}
@@ -298,9 +334,31 @@ export default function EditSale() {
         </div>
 
         <div className="flex gap-3">
-          <Button type="submit" disabled={submitting}>
-            {submitting ? 'Saving...' : 'Save Changes'}
-          </Button>
+          {(() => {
+            const hasOutOfStock = items.some((i) => {
+              if (!i.product) return false;
+              const p = products.find((x) => x._id === i.product);
+              return p && p.currentStock <= 0;
+            });
+            const hasExceeded = items.some((i) => {
+              if (!i.product) return false;
+              const p = products.find((x) => x._id === i.product);
+              return p && Number(i.quantity) > p.currentStock;
+            });
+            const isSaveDisabled = submitting || hasOutOfStock || hasExceeded;
+
+            return (
+              <Button type="submit" disabled={isSaveDisabled}>
+                {hasOutOfStock
+                  ? 'Cannot Save — Out of Stock Product'
+                  : hasExceeded
+                  ? 'Cannot Save — Insufficient Stock'
+                  : submitting
+                  ? 'Saving...'
+                  : 'Save Changes'}
+              </Button>
+            );
+          })()}
           <Button
             type="button"
             variant="secondary"

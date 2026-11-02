@@ -19,7 +19,7 @@ export default function Products() {
   const [meta, setMeta] = useState(null);
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
-  const [lowStock, setLowStock] = useState(false);
+  const [stockFilter, setStockFilter] = useState(''); // '' | 'lowStock' | 'outOfStock'
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [sort, setSort] = useState('createdAt');
@@ -32,15 +32,24 @@ export default function Products() {
 
   const load = async () => {
     setLoading(true);
-    const res = await api.get('/products', {
-      params: { search: debounced, status, lowStock: lowStock || undefined, page, sort, order, limit },
-    });
+    const params = {
+      search: debounced,
+      status,
+      page,
+      sort,
+      order,
+      limit,
+    };
+    if (stockFilter === 'outOfStock') params.outOfStock = 'true';
+    else if (stockFilter === 'lowStock') params.lowStock = 'true';
+
+    const res = await api.get('/products', { params });
     setRows(res.data.data);
     setMeta(res.data.meta);
     setLoading(false);
   };
 
-  useEffect(() => { load(); }, [debounced, status, lowStock, page, sort, order, limit]);
+  useEffect(() => { load(); }, [debounced, status, stockFilter, page, sort, order, limit]);
 
   const onSort = (key) => {
     if (sort === key) setOrder((o) => (o === 'asc' ? 'desc' : 'asc'));
@@ -72,10 +81,18 @@ export default function Products() {
           <option value="active">Active</option>
           <option value="inactive">Inactive</option>
         </select>
-        <label className="flex items-center gap-2 text-sm">
-          <input type="checkbox" checked={lowStock} onChange={(e) => { setLowStock(e.target.checked); setPage(1); }} />
-          Low stock
-        </label>
+        <select
+          className="input max-w-[160px]"
+          value={stockFilter}
+          onChange={(e) => {
+            setStockFilter(e.target.value);
+            setPage(1);
+          }}
+        >
+          <option value="">All stock levels</option>
+          <option value="lowStock">Low stock</option>
+          <option value="outOfStock">Out of stock</option>
+        </select>
         <select
           className="input max-w-[150px]"
           value={limit}
@@ -109,9 +126,28 @@ export default function Products() {
             { key: 'category', label: 'Category', render: (r) => r.category?.name },
             { key: 'purchasePrice', label: 'Purchase', render: (r) => money(r.purchasePrice) },
             { key: 'sellingPrice', label: 'Selling', render: (r) => money(r.sellingPrice) },
-            { key: 'currentStock', label: 'Stock', sort: true, render: (r) => (
-              <span>{r.currentStock}{r.currentStock <= r.minStock && <Badge status="Unpaid">Low</Badge>}</span>
-            ) },
+            {
+              key: 'currentStock',
+              label: 'Stock Level',
+              sort: true,
+              render: (r) => (
+                <div>
+                  {r.currentStock <= 0 ? (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-rose-100 px-2.5 py-0.5 text-xs font-bold text-rose-700 dark:bg-rose-950/80 dark:text-rose-400 border border-rose-300 dark:border-rose-900">
+                      <span className="h-1.5 w-1.5 rounded-full bg-rose-600"></span>
+                      Out of Stock (0)
+                    </span>
+                  ) : r.currentStock <= r.minStock ? (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-bold text-amber-800 dark:bg-amber-950/80 dark:text-amber-400 border border-amber-300 dark:border-amber-900">
+                      <span className="h-1.5 w-1.5 rounded-full bg-amber-600"></span>
+                      Low Stock ({r.currentStock})
+                    </span>
+                  ) : (
+                    <span className="font-semibold text-slate-800 dark:text-slate-200">{r.currentStock}</span>
+                  )}
+                </div>
+              ),
+            },
             { key: 'status', label: 'Status', render: (r) => <Badge status={r.status}>{r.status}</Badge> },
             { key: 'actions', label: '', render: (r) => (
               <div className="flex gap-2">

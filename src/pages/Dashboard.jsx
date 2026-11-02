@@ -61,7 +61,16 @@ export default function Dashboard() {
     { label: 'Total Products', value: t.totalProducts, icon: Package, color: 'from-amber-500 to-orange-600', text: 'text-amber-500', bg: 'bg-amber-50 dark:bg-amber-950/30' },
     { label: 'Total Customers', value: t.totalCustomers, icon: Users, color: 'from-violet-500 to-purple-600', text: 'text-violet-500', bg: 'bg-violet-50 dark:bg-violet-950/30' },
     { label: 'Total Suppliers', value: t.totalSuppliers, icon: Building2, color: 'from-slate-600 to-slate-800', text: 'text-slate-500', bg: 'bg-slate-100 dark:bg-slate-800/40' },
-    { label: 'Customer Debt', value: money(t.totalCustomerDebt), icon: CreditCard, color: 'from-rose-500 to-red-600', text: 'text-rose-500', bg: 'bg-rose-50 dark:bg-rose-950/30' },
+    {
+      label: 'Outstanding Customer Debt',
+      value: money(t.totalCustomerDebt),
+      icon: CreditCard,
+      color: 'from-rose-500 to-red-600',
+      text: 'text-rose-500',
+      bg: 'bg-rose-50 dark:bg-rose-950/30',
+      to: '/customers/debts',
+      hint: 'Click to view outstanding debts',
+    },
     { label: 'Total Expenses', value: money(t.totalExpenses), icon: Wallet, color: 'from-fuchsia-500 to-pink-600', text: 'text-fuchsia-500', bg: 'bg-fuchsia-50 dark:bg-fuchsia-950/30' },
     { label: 'Current Stock Value', value: money(t.currentStockValue), icon: Package, color: 'from-teal-500 to-emerald-600', text: 'text-teal-500', bg: 'bg-teal-50 dark:bg-teal-950/30' },
   ];
@@ -243,11 +252,18 @@ export default function Dashboard() {
               {
                 key: 'warn',
                 label: 'Status',
-                render: () => (
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-50 px-2.5 py-1 text-xs font-bold text-rose-600 dark:bg-rose-950/60 dark:text-rose-400 border border-rose-200 dark:border-rose-900">
-                    <span className="h-2 w-2 rounded-full bg-rose-500 animate-pulse"></span>
-                    Low Stock
-                  </span>
+                render: (r) => (
+                  r.currentStock <= 0 ? (
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-100 px-2.5 py-1 text-xs font-bold text-rose-700 dark:bg-rose-950/80 dark:text-rose-400 border border-rose-300 dark:border-rose-900">
+                      <span className="h-2 w-2 rounded-full bg-rose-600 animate-ping"></span>
+                      Out of Stock
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-600 dark:bg-amber-950/60 dark:text-amber-400 border border-amber-200 dark:border-amber-900">
+                      <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse"></span>
+                      Low Stock
+                    </span>
+                  )
                 ),
               },
             ]}

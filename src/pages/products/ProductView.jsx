@@ -37,7 +37,25 @@ export default function ProductView() {
           <p>Purchase: {money(product.purchasePrice)}</p>
           <p>Selling: {money(product.sellingPrice)}</p>
           <p>Stock: {product.currentStock} / min {product.minStock}</p>
-          {product.currentStock <= product.minStock && <div className="mt-2"><Badge status="Unpaid">Low Stock warning</Badge></div>}
+          {product.currentStock <= 0 ? (
+            <div className="mt-2">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-100 px-3 py-1 text-xs font-bold text-rose-700 dark:bg-rose-950/80 dark:text-rose-400 border border-rose-300 dark:border-rose-900">
+                <span className="h-2 w-2 rounded-full bg-rose-600"></span>
+                Out of Stock (0 Available)
+              </span>
+            </div>
+          ) : product.currentStock <= product.minStock ? (
+            <div className="mt-2">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1 text-xs font-bold text-amber-700 dark:bg-amber-950/60 dark:text-amber-400 border border-amber-200 dark:border-amber-900">
+                <span className="h-2 w-2 rounded-full bg-amber-500"></span>
+                Low Stock Warning ({product.currentStock} left)
+              </span>
+            </div>
+          ) : (
+            <div className="mt-2">
+              <Badge status="Paid">In Stock ({product.currentStock})</Badge>
+            </div>
+          )}
           <div className="mt-2"><Badge status={product.status}>{product.status}</Badge></div>
         </div>
         <div className="card lg:col-span-2">
