@@ -13,6 +13,7 @@ import ConfirmDialog from '../../components/ConfirmDialog';
 import ProductModal from '../../components/ProductModal';
 import AddStockModal from '../../components/AddStockModal';
 import { PlusCircle } from 'lucide-react';
+import { money } from '../../utils/format';
 
 export default function Products() {
   const [rows, setRows] = useState([]);
