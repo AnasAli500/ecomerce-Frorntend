@@ -30,14 +30,20 @@ import PageHeader from '../components/PageHeader';
 import Spinner from '../components/Spinner';
 import Table from '../components/Table';
 import Badge from '../components/Badge';
+import AddStockModal from '../components/AddStockModal';
 import { money } from '../utils/format';
 
 export default function Dashboard() {
   const [data, setData] = useState(null);
   const [chart, setChart] = useState('daily');
+  const [selectedStockProduct, setSelectedStockProduct] = useState(null);
+
+  const fetchDashboard = () => {
+    api.get('/reports/dashboard').then((res) => setData(res.data.data));
+  };
 
   useEffect(() => {
-    api.get('/reports/dashboard').then((res) => setData(res.data.data));
+    fetchDashboard();
   }, []);
 
   if (!data) return <Spinner />;
@@ -256,14 +262,27 @@ export default function Dashboard() {
                   r.currentStock <= 0 ? (
                     <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-100 px-2.5 py-1 text-xs font-bold text-rose-700 dark:bg-rose-950/80 dark:text-rose-400 border border-rose-300 dark:border-rose-900">
                       <span className="h-2 w-2 rounded-full bg-rose-600 animate-ping"></span>
-                      Out of Stock
+                      Out of Stock (0)
                     </span>
                   ) : (
                     <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-600 dark:bg-amber-950/60 dark:text-amber-400 border border-amber-200 dark:border-amber-900">
                       <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse"></span>
-                      Low Stock
+                      Low Stock ({r.currentStock})
                     </span>
                   )
+                ),
+              },
+              {
+                key: 'actions',
+                label: '',
+                render: (r) => (
+                  <button
+                    onClick={() => setSelectedStockProduct(r)}
+                    className="inline-flex items-center gap-1 rounded-lg bg-brand-50 px-2.5 py-1 text-xs font-bold text-brand-600 hover:bg-brand-100 dark:bg-brand-950/40 dark:text-brand-400 dark:hover:bg-brand-950/70 border border-brand-200 dark:border-brand-900"
+                  >
+                    <Plus size={13} />
+                    <span>Add Stock</span>
+                  </button>
                 ),
               },
             ]}
@@ -271,6 +290,13 @@ export default function Dashboard() {
           />
         )}
       </div>
+
+      <AddStockModal
+        open={Boolean(selectedStockProduct)}
+        product={selectedStockProduct}
+        onClose={() => setSelectedStockProduct(null)}
+        onSuccess={fetchDashboard}
+      />
     </div>
   );
 }

@@ -31,3 +31,10 @@ export function fileUrl(path) {
   if (path.startsWith('http')) return path;
   return `http://localhost:5000${path}`;
 }
+
+export function getStockStatus(stock) {
+  const qty = Number(stock ?? 0);
+  if (qty <= 0) return 'Out of Stock';
+  if (qty <= 2) return 'Low Stock';
+  return 'In Stock';
+}

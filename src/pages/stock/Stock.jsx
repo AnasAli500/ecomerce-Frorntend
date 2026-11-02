@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
+import { PlusCircle } from 'lucide-react';
 import api from '../../services/api';
 import { useDebounce } from '../../hooks/useDebounce';
 import PageHeader from '../../components/PageHeader';
@@ -9,6 +10,8 @@ import SearchInput from '../../components/SearchInput';
 import Button from '../../components/Button';
 import Modal from '../../components/Modal';
 import Badge from '../../components/Badge';
+import AddStockModal from '../../components/AddStockModal';
+import { money } from '../../utils/format';
 
 export default function Stock() {
   const [rows, setRows] = useState([]);
@@ -22,6 +25,7 @@ export default function Stock() {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(15);
   const [open, setOpen] = useState(false);
+  const [openAddStock, setOpenAddStock] = useState(false);
   const [form, setForm] = useState({ product: '', quantity: 1, type: 'in', reason: 'adjustment_in', notes: '' });
   const debounced = useDebounce(search);
 
@@ -38,9 +42,13 @@ export default function Stock() {
     setMeta(res.data.meta);
   };
 
+  const loadProducts = () => {
+    api.get('/products', { params: { limit: 200 } }).then((res) => setProducts(res.data.data));
+  };
+
   useEffect(() => {
     load();
-    api.get('/products', { params: { limit: 100 } }).then((res) => setProducts(res.data.data));
+    loadProducts();
   }, [debounced, type, period, from, to, page, limit]);
 
   const save = async (e) => {
@@ -50,6 +58,7 @@ export default function Stock() {
       toast.success('Stock movement recorded');
       setOpen(false);
       load();
+      loadProducts();
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed');
     }
@@ -57,7 +66,22 @@ export default function Stock() {
 
   return (
     <div>
-      <PageHeader title="Stock Management" subtitle="Every stock change creates a history record" action={<Button onClick={() => setOpen(true)}>Adjust stock</Button>} />
+      <PageHeader
+        title="Stock Management"
+        subtitle="Every stock change creates a history record"
+        action={
+          <div className="flex items-center gap-2">
+            <Button onClick={() => setOpenAddStock(true)} className="flex items-center gap-1.5">
+              <PlusCircle size={15} />
+              <span>Add Stock</span>
+            </Button>
+            <Button variant="secondary" onClick={() => setOpen(true)}>
+              Adjust Stock
+            </Button>
+          </div>
+        }
+      />
+
       <div className="mb-4 flex flex-wrap gap-2">
         <SearchInput value={search} onChange={setSearch} placeholder="Reference" />
         <select className="input max-w-[140px]" value={type} onChange={(e) => setType(e.target.value)}>
@@ -94,6 +118,7 @@ export default function Stock() {
           <option value="all">All</option>
         </select>
       </div>
+
       <div className="card">
         <Table
           rows={rows}
@@ -101,15 +126,26 @@ export default function Stock() {
             { key: 'date', label: 'Date', render: (r) => new Date(r.date).toLocaleString() },
             { key: 'product', label: 'Product', render: (r) => r.product?.name },
             { key: 'type', label: 'Type', render: (r) => <Badge status={r.type === 'in' ? 'Paid' : 'Unpaid'}>{r.type === 'in' ? 'Stock In' : 'Stock Out'}</Badge> },
-            { key: 'quantity', label: 'Quantity', render: (r) => `${r.type === 'in' ? '+' : '-'}${r.quantity}` },
             { key: 'previousStock', label: 'Previous' },
-            { key: 'newStock', label: 'Balance' },
+            {
+              key: 'quantity',
+              label: 'Added / Removed',
+              render: (r) => (
+                <span className={`font-bold ${r.type === 'in' ? 'text-emerald-600' : 'text-rose-600'}`}>
+                  {r.type === 'in' ? '+' : '-'}{r.quantity}
+                </span>
+              ),
+            },
+            { key: 'newStock', label: 'New Balance', render: (r) => <span className="font-extrabold">{r.newStock}</span> },
+            { key: 'purchaseCost', label: 'Cost', render: (r) => (r.purchaseCost ? money(r.purchaseCost) : '—') },
+            { key: 'supplier', label: 'Supplier', render: (r) => r.supplier?.name || r.supplier?.company || '—' },
             { key: 'referenceNumber', label: 'Reference' },
             { key: 'reason', label: 'Reason' },
           ]}
         />
         <Pagination meta={meta} onPage={setPage} limit={limit} onLimitChange={setLimit} />
       </div>
+
       <Modal open={open} title="Stock adjustment" onClose={() => setOpen(false)}>
         <form onSubmit={save} className="space-y-3">
           <select className="input" value={form.product} onChange={(e) => setForm({ ...form, product: e.target.value })} required>
@@ -136,6 +172,16 @@ export default function Stock() {
           <Button type="submit">Save movement</Button>
         </form>
       </Modal>
+
+      <AddStockModal
+        open={openAddStock}
+        products={products}
+        onClose={() => setOpenAddStock(false)}
+        onSuccess={() => {
+          load();
+          loadProducts();
+        }}
+      />
     </div>
   );
 }

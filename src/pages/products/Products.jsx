@@ -10,9 +10,9 @@ import SearchInput from '../../components/SearchInput';
 import Button from '../../components/Button';
 import Badge from '../../components/Badge';
 import ConfirmDialog from '../../components/ConfirmDialog';
-import { money } from '../../utils/format';
-
 import ProductModal from '../../components/ProductModal';
+import AddStockModal from '../../components/AddStockModal';
+import { PlusCircle } from 'lucide-react';
 
 export default function Products() {
   const [rows, setRows] = useState([]);
@@ -28,7 +28,14 @@ export default function Products() {
   const [del, setDel] = useState(null);
   const [openModal, setOpenModal] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [stockModalProduct, setStockModalProduct] = useState(null);
   const debounced = useDebounce(search);
+
+  const handleStockAdded = (updatedProduct) => {
+    setRows((prev) =>
+      prev.map((item) => (item._id === updatedProduct._id ? { ...item, ...updatedProduct } : item))
+    );
+  };
 
   const load = async () => {
     setLoading(true);
@@ -135,35 +142,53 @@ export default function Products() {
                   {r.currentStock <= 0 ? (
                     <span className="inline-flex items-center gap-1 rounded-full bg-rose-100 px-2.5 py-0.5 text-xs font-bold text-rose-700 dark:bg-rose-950/80 dark:text-rose-400 border border-rose-300 dark:border-rose-900">
                       <span className="h-1.5 w-1.5 rounded-full bg-rose-600"></span>
-                      Out of Stock (0)
+                      Out of Stock ({r.currentStock})
                     </span>
-                  ) : r.currentStock <= r.minStock ? (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-bold text-amber-800 dark:bg-amber-950/80 dark:text-amber-400 border border-amber-300 dark:border-amber-900">
+                  ) : r.currentStock <= 2 ? (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-bold text-amber-800 dark:bg-amber-950/80 dark:text-amber-400 border border-amber-300 dark:border-amber-900">
                       <span className="h-1.5 w-1.5 rounded-full bg-amber-600"></span>
                       Low Stock ({r.currentStock})
                     </span>
                   ) : (
-                    <span className="font-semibold text-slate-800 dark:text-slate-200">{r.currentStock}</span>
+                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900">
+                      In Stock ({r.currentStock})
+                    </span>
                   )}
                 </div>
               ),
             },
             { key: 'status', label: 'Status', render: (r) => <Badge status={r.status}>{r.status}</Badge> },
-            { key: 'actions', label: '', render: (r) => (
-              <div className="flex gap-2">
-                <Link to={`/products/${r._id}`} className="text-brand-600">View</Link>
-                <button
-                  className="text-slate-500 hover:text-slate-700 font-medium"
-                  onClick={() => {
-                    setSelectedProduct(r);
-                    setOpenModal(true);
-                  }}
-                >
-                  Edit
-                </button>
-                <button className="text-rose-600" onClick={() => setDel(r)}>Delete</button>
-              </div>
-            ) },
+            {
+              key: 'actions',
+              label: '',
+              render: (r) => (
+                <div className="flex items-center gap-2">
+                  <button
+                    className="inline-flex items-center gap-1 rounded-lg bg-brand-50 px-2.5 py-1 text-xs font-bold text-brand-600 hover:bg-brand-100 dark:bg-brand-950/40 dark:text-brand-400 dark:hover:bg-brand-950/70 border border-brand-200 dark:border-brand-900"
+                    onClick={() => setStockModalProduct(r)}
+                    title="Add stock to this product"
+                  >
+                    <PlusCircle size={13} />
+                    <span>Add Stock</span>
+                  </button>
+                  <Link to={`/products/${r._id}`} className="text-brand-600 hover:underline text-xs font-semibold">
+                    View
+                  </Link>
+                  <button
+                    className="text-slate-500 hover:text-slate-700 font-medium text-xs"
+                    onClick={() => {
+                      setSelectedProduct(r);
+                      setOpenModal(true);
+                    }}
+                  >
+                    Edit
+                  </button>
+                  <button className="text-rose-600 hover:text-rose-800 text-xs font-medium" onClick={() => setDel(r)}>
+                    Delete
+                  </button>
+                </div>
+              ),
+            },
           ]}
         />
         <Pagination meta={meta} onPage={setPage} limit={limit} onLimitChange={setLimit} />
@@ -174,6 +199,13 @@ export default function Products() {
         product={selectedProduct}
         onClose={() => setOpenModal(false)}
         onSaved={load}
+      />
+
+      <AddStockModal
+        open={Boolean(stockModalProduct)}
+        product={stockModalProduct}
+        onClose={() => setStockModalProduct(null)}
+        onSuccess={handleStockAdded}
       />
 
       <ConfirmDialog
