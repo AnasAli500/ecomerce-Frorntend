@@ -1,7 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
 import { Printer, Download, ArrowLeft, CheckCircle2, AlertCircle, Pencil, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../../services/api';
@@ -38,7 +36,12 @@ export default function SaleView() {
 
   if (!sale) return <Spinner />;
 
-  const downloadPDF = () => {
+  const downloadPDF = async () => {
+    // Dynamically import jsPDF only when the user requests a download
+    const [{ default: jsPDF }, { default: autoTable }] = await Promise.all([
+      import('jspdf'),
+      import('jspdf-autotable'),
+    ]);
     const doc = new jsPDF();
     
     // Header Branding

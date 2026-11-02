@@ -1,19 +1,30 @@
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
-import * as XLSX from 'xlsx';
+/**
+ * export.js — PDF and Excel export utilities.
+ *
+ * jsPDF, jspdf-autotable, and xlsx are heavy libraries (~500 kB combined).
+ * They are loaded on-demand via dynamic import() so they are never included
+ * in the initial page bundle — they are fetched only when the user clicks an
+ * Export button.
+ */
 
-export function exportReportPdf(title, report) {
+export async function exportReportPdf(title, report) {
+  // Dynamically import jsPDF and autoTable only when needed
+  const [{ default: jsPDF }, { default: autoTable }] = await Promise.all([
+    import('jspdf'),
+    import('jspdf-autotable'),
+  ]);
+
   const doc = new jsPDF();
-  
+
   // Header block
   doc.setFillColor(15, 23, 42); // slate-900
   doc.rect(0, 0, 210, 28, 'F');
-  
+
   doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(16);
   doc.text('JILE ELECTRONICS', 14, 16);
-  
+
   doc.setFontSize(10);
   doc.setFont('helvetica', 'normal');
   doc.text(title.toUpperCase(), 14, 23);
@@ -48,7 +59,10 @@ export function exportReportPdf(title, report) {
   doc.save(`${title.replace(/\s+/g, '-').toLowerCase()}.pdf`);
 }
 
-export function exportReportExcel(title, report) {
+export async function exportReportExcel(title, report) {
+  // Dynamically import xlsx only when needed
+  const XLSX = await import('xlsx');
+
   const ws = XLSX.utils.json_to_sheet([
     {
       Report: title,
