@@ -6,7 +6,9 @@ import Modal from './Modal';
 import Button from './Button';
 import { money, getStockStatus } from '../utils/format';
 
-export default function AddStockModal({ open, onClose, product, products = [], onSuccess }) {
+const DEFAULT_PRODUCTS = [];
+
+export default function AddStockModal({ open, onClose, product, products = DEFAULT_PRODUCTS, onSuccess }) {
   const [selectedProductId, setSelectedProductId] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [supplier, setSupplier] = useState('');
@@ -23,6 +25,9 @@ export default function AddStockModal({ open, onClose, product, products = [], o
     return products.find((p) => p._id === selectedProductId) || null;
   }, [product, products, selectedProductId]);
 
+  const productId = product?._id || '';
+
+  // Initialize only when modal opens or active product ID changes
   useEffect(() => {
     if (open) {
       setError('');
@@ -34,9 +39,9 @@ export default function AddStockModal({ open, onClose, product, products = [], o
       if (product) {
         setSelectedProductId(product._id);
         setPurchaseCost(product.purchasePrice !== undefined ? String(product.purchasePrice) : '');
-      } else {
-        setSelectedProductId(products[0]?._id || '');
-        setPurchaseCost(products[0]?.purchasePrice !== undefined ? String(products[0].purchasePrice) : '');
+      } else if (products.length > 0) {
+        setSelectedProductId(products[0]._id || '');
+        setPurchaseCost(products[0].purchasePrice !== undefined ? String(products[0].purchasePrice) : '');
       }
 
       // Load suppliers list
@@ -44,7 +49,7 @@ export default function AddStockModal({ open, onClose, product, products = [], o
         .then((res) => setSuppliers(res.data.data || []))
         .catch(() => {});
     }
-  }, [open, product, products]);
+  }, [open, productId]);
 
   // When selected product changes in dropdown
   const handleProductSelect = (id) => {
@@ -236,7 +241,9 @@ export default function AddStockModal({ open, onClose, product, products = [], o
             <div className="flex items-center">
               <button
                 type="button"
-                onClick={() => {
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
                   setError('');
                   setQuantity((prev) => {
                     const val = Number(prev) || 1;
@@ -267,7 +274,9 @@ export default function AddStockModal({ open, onClose, product, products = [], o
               />
               <button
                 type="button"
-                onClick={() => {
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
                   setError('');
                   setQuantity((prev) => {
                     const val = Number(prev) || 0;
@@ -288,13 +297,15 @@ export default function AddStockModal({ open, onClose, product, products = [], o
                 <button
                   key={preset}
                   type="button"
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
                     setError('');
                     setQuantity(preset);
                   }}
-                  className={`rounded-lg px-2 py-0.5 text-xs font-bold transition-all ${
+                  className={`rounded-lg px-2.5 py-1 text-xs font-bold transition-all ${
                     Number(quantity) === preset
-                      ? 'bg-brand-600 text-white shadow-sm'
+                      ? 'bg-brand-600 text-white shadow-sm ring-2 ring-brand-500/30'
                       : 'bg-slate-100 text-slate-700 hover:bg-brand-50 hover:text-brand-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
                   }`}
                 >
