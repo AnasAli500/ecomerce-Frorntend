@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react';
 import toast from 'react-hot-toast';
-import { Package, PlusCircle, ArrowRight, Calendar, DollarSign, Building2, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { Package, PlusCircle, ArrowRight, Calendar, DollarSign, Building2, AlertTriangle, CheckCircle2, Plus, Minus } from 'lucide-react';
 import api from '../services/api';
 import Modal from './Modal';
 import Button from './Button';
@@ -233,21 +233,75 @@ export default function AddStockModal({ open, onClose, product, products = [], o
         <div className="grid gap-3 sm:grid-cols-2">
           <div>
             <label className="label">Quantity to Add</label>
-            <input
-              className={`input ${!isValidQty && quantity ? 'border-rose-500 text-rose-600' : ''}`}
-              type="number"
-              min="1"
-              step="1"
-              value={quantity}
-              onChange={(e) => {
-                setError('');
-                setQuantity(e.target.value);
-              }}
-              placeholder="e.g. 10"
-              required
-              autoFocus
-            />
-            <p className="mt-1 text-[11px] text-slate-400">Must be at least 1 unit.</p>
+            <div className="flex items-center">
+              <button
+                type="button"
+                onClick={() => {
+                  setError('');
+                  setQuantity((prev) => {
+                    const val = Number(prev) || 1;
+                    return Math.max(1, val - 1);
+                  });
+                }}
+                disabled={Number(quantity) <= 1}
+                className="flex h-10 w-11 items-center justify-center rounded-l-xl border border-r-0 border-slate-300 bg-slate-100 text-slate-700 hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 active:scale-95 transition"
+                title="Decrease by 1"
+              >
+                <Minus size={16} />
+              </button>
+              <input
+                className={`h-10 flex-1 border border-slate-300 bg-white text-center font-bold text-slate-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-white ${
+                  !isValidQty && quantity !== '' ? 'border-rose-500 text-rose-600' : ''
+                }`}
+                type="number"
+                min="1"
+                step="1"
+                value={quantity}
+                onChange={(e) => {
+                  setError('');
+                  setQuantity(e.target.value);
+                }}
+                placeholder="1"
+                required
+                autoFocus
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  setError('');
+                  setQuantity((prev) => {
+                    const val = Number(prev) || 0;
+                    return val + 1;
+                  });
+                }}
+                className="flex h-10 w-11 items-center justify-center rounded-r-xl border border-l-0 border-slate-300 bg-slate-100 text-slate-700 hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 active:scale-95 transition"
+                title="Increase by 1"
+              >
+                <Plus size={16} />
+              </button>
+            </div>
+
+            {/* Quick Presets */}
+            <div className="mt-2 flex flex-wrap items-center gap-1.5">
+              <span className="text-[11px] text-slate-400 font-medium mr-0.5">Quick add:</span>
+              {[1, 5, 10, 20, 50, 100].map((preset) => (
+                <button
+                  key={preset}
+                  type="button"
+                  onClick={() => {
+                    setError('');
+                    setQuantity(preset);
+                  }}
+                  className={`rounded-lg px-2 py-0.5 text-xs font-bold transition-all ${
+                    Number(quantity) === preset
+                      ? 'bg-brand-600 text-white shadow-sm'
+                      : 'bg-slate-100 text-slate-700 hover:bg-brand-50 hover:text-brand-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
+                  }`}
+                >
+                  +{preset}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div>
@@ -325,7 +379,11 @@ export default function AddStockModal({ open, onClose, product, products = [], o
             Cancel
           </Button>
           <Button type="submit" disabled={saving || !isValidQty || !activeProduct}>
-            {saving ? 'Adding Stock...' : `Add ${isValidQty ? quantity : ''} Units to Stock`}
+            {saving
+              ? 'Adding Stock...'
+              : !isValidQty
+              ? 'Enter Quantity to Add'
+              : `Add ${quantity} Units to Stock`}
           </Button>
         </div>
       </form>
