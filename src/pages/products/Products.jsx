@@ -36,6 +36,7 @@ export default function Products() {
     setRows((prev) =>
       prev.map((item) => (item._id === updatedProduct._id ? { ...item, ...updatedProduct } : item))
     );
+    load();
   };
 
   const load = async () => {

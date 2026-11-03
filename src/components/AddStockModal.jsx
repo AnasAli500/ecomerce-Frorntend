@@ -110,17 +110,35 @@ export default function AddStockModal({ open, onClose, product, products = [], o
 
     setSaving(true);
     try {
-      const res = await api.post('/stock/add', {
-        product: activeProduct._id,
-        quantity: numQty,
-        supplier: supplier || undefined,
-        purchaseCost: purchaseCost !== '' ? numCost : undefined,
-        date: date || undefined,
-        notes: notes || undefined,
-      });
+      let res;
+      try {
+        res = await api.post('/stock/add', {
+          product: activeProduct._id,
+          quantity: numQty,
+          supplier: supplier || undefined,
+          purchaseCost: purchaseCost !== '' ? numCost : undefined,
+          date: date || undefined,
+          notes: notes || undefined,
+        });
+      } catch (addErr) {
+        // If /stock/add is not found (e.g. backend host hasn't finished redeploying new route), fallback to /stock/adjust
+        if (addErr.response?.status === 404) {
+          res = await api.post('/stock/adjust', {
+            product: activeProduct._id,
+            quantity: numQty,
+            type: 'in',
+            reason: 'adjustment_in',
+            supplier: supplier || undefined,
+            purchaseCost: purchaseCost !== '' ? numCost : undefined,
+            notes: notes || 'Stock added',
+          });
+        } else {
+          throw addErr;
+        }
+      }
 
-      const updated = res.data.data.product;
-      const movement = res.data.data.movement;
+      const updated = res.data?.data?.product || activeProduct;
+      const movement = res.data?.data?.movement;
 
       toast.success(
         `Stock added successfully! ${activeProduct.name} is now ${newStatus} (${newTotalStock} units).`
